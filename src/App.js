@@ -1,44 +1,27 @@
 import { useState } from "react";
+import { collection, getDocs } from "firebase/firestore";
+import { db } from "./firebase-config";
 
 import Header from "./components/Header";
 import Books from "./components/Books";
 import AddBook from "./components/AddBook";
 
 function App() {
-  const [books, setBooks] = useState([
-    {
-      id: 1,
-      authors: "Martin, Robert",
-      isbn: "978-0137081073",
-      name: "The Clean Coder: A Code of Conduct for Professional Programmers",
-      pubYear: 2011,
-      rating: 9,
-    },
-    {
-      id: 2,
-      authors: "Martin, Robert 1",
-      isbn: "978-0137081073",
-      name: "The Clean Coder: A Code of Conduct for Professional Programmers",
-      pubYear: 2011,
-      rating: 8,
-    },
-    {
-      id: 3,
-      authors: "Martin, Robert 2",
-      isbn: "978-0137081073",
-      name: "The Clean Coder: A Code of Conduct for Professional Programmers",
-      pubYear: 2011,
-      rating: 7,
-    },
-  ]);
+  const booksCollectionRef = collection(db, "books");
+  const [books, setBooks] = useState([]);
 
-  // Add book
-  const addBookEvent = (book) => {
-    const newBook = {
-      ...book,
-    };
-    setBooks([...books, newBook]);
+  const getBooks = async () => {
+    const data = await getDocs(booksCollectionRef);
+    setBooks(data.docs.map((doc) => ({ ...doc.data() })));
   };
+
+  // const addBookEvent = (book) => {
+  //   const newBook = {
+  //     id: book.name,
+  //     ...book,
+  //   };
+  //   setBooks([...books, newBook]);
+  // };
 
   // Delete book
   const deleteBookEvent = (id) => {
@@ -48,7 +31,7 @@ function App() {
   return (
     <div className="container">
       <Header title="Book Catalog" />
-      <AddBook onAdd={addBookEvent} />
+      <AddBook onAdd={getBooks} />
       {books.length > 0 ? (
         <Books books={books} onDelete={deleteBookEvent} />
       ) : (

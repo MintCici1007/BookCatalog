@@ -1,15 +1,22 @@
-import { useLayoutEffect, useState } from "react";
+import { useState, useEffect } from "react";
+import { collection, addDoc } from "firebase/firestore";
+import { db } from "../firebase-config";
 
 const AddBook = ({ onAdd }) => {
   const [name, setName] = useState("");
-  const [authors, setAuthors] = useState("");
+  const [author, setauthor] = useState("");
   const [pubYear, setpubYear] = useState("");
   const [rating, setRating] = useState(0);
   const [isbn, setIsbn] = useState("");
 
-  const onSubmit = (e) => {
-    e.preventDefault();
+  const booksCollectionRef = collection(db, "books");
 
+  useEffect(() => {
+    onAdd();
+  }, []);
+
+  // Add book to Firebase
+  const addBookFirestore = async () => {
     let convertedPubYear;
 
     if (pubYear) {
@@ -19,11 +26,25 @@ const AddBook = ({ onAdd }) => {
         return;
       }
     }
+    await addDoc(booksCollectionRef, {
+      name: name,
+      author: author,
+      pubYear: +pubYear,
+      rating: +rating,
+      isbn: isbn,
+    });
+  };
 
-    onAdd({ name, authors, pubYear: convertedPubYear, rating, isbn });
+  // onSubmit
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    // let convertedPubYear;
+
+    // onAdd({ name, author, pubYear: convertedPubYear, rating, isbn });
 
     setName("");
-    setAuthors("");
+    setauthor("");
     setpubYear("");
     setRating(0);
     setIsbn("");
@@ -44,13 +65,13 @@ const AddBook = ({ onAdd }) => {
       </div>
 
       <div className="form-control">
-        <label>Authors</label>
+        <label>author</label>
         <input
           type="text"
-          placeholder="Add Authors"
+          placeholder="Add author"
           required
-          value={authors}
-          onChange={(e) => setAuthors(e.target.value)}
+          value={author}
+          onChange={(e) => setauthor(e.target.value)}
         />
       </div>
 
@@ -86,7 +107,12 @@ const AddBook = ({ onAdd }) => {
         />
       </div>
 
-      <input type="submit" value="submitAddBook" className="btn btn-block" />
+      <input
+        type="submit"
+        value="submitAddBook"
+        className="btn btn-block"
+        onClick={addBookFirestore}
+      />
     </form>
   );
 };

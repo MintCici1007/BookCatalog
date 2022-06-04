@@ -11,7 +11,7 @@ const Book = ({ book, onDelete }) => {
           onClick={() => onDelete(book.id)}
         />{" "}
       </h3>
-      <p>Authors: {book.authors}</p>
+      <p>author: {book.author}</p>
 
       <p> Publication Year: {book.pubYear} </p>
 
