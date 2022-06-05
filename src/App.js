@@ -17,9 +17,13 @@ function App() {
   const [years, setYears] = useState([]);
 
   // first time going to website
-  useEffect(() => getBooks, []);
+  useEffect(() => {
+    console.log("useEffect called");
+    getBooks();
+  }, []);
 
   const getBooks = async () => {
+    console.log("getBooks called");
     let orderData = [];
     const orderResponse = await getDocs(booksCollectionRef);
     const orders = orderResponse.docs;
@@ -57,27 +61,35 @@ function App() {
   // add book
   const [name, setName] = useState("");
   const [author, setauthor] = useState("");
-  const [pubYear, setpubYear] = useState("");
+  const [pubYear, setpubYear] = useState(0);
   const [rating, setRating] = useState(0);
   const [isbn, setIsbn] = useState("");
   // Add book to Firebase
   const addBookFirestore = async () => {
-    let convertedPubYear;
+    if (!name || name.length > 100) {
+      alert("Book name should be between 0 and 100 characters.");
+      return;
+    }
+    if (!author) {
+      alert("Book author should have at least one.");
+      return;
+    }
+    if (pubYear && pubYear < 1800) {
+      alert("Publication year should be > 1800.");
+      return;
+    }
 
-    if (pubYear || pubYear === "0") {
-      convertedPubYear = +pubYear;
-      if (convertedPubYear < 1800) {
-        alert("Publication year should be > 1800");
-        return;
-      }
+    if (+rating > 10 || +rating <0) {
+      alert("Book rating should be between 0 and 10.");
+      return;
     }
 
     await addDoc(booksCollectionRef, {
-      name: name,
-      author: author,
+      name: name.trim(),
+      author: author.trim(),
       pubYear: +pubYear,
       rating: +rating,
-      isbn: isbn,
+      isbn: isbn.trim(),
     });
 
     await getBooks();
@@ -89,7 +101,7 @@ function App() {
 
     setName("");
     setauthor("");
-    setpubYear("");
+    setpubYear(0);
     setRating(0);
     setIsbn("");
   };
@@ -110,8 +122,6 @@ function App() {
           <input
             type="text"
             placeholder="Add Name"
-            required
-            maxLength="100"
             value={name}
             onChange={(e) => setName(e.target.value)}
           />
@@ -122,7 +132,6 @@ function App() {
           <input
             type="text"
             placeholder="Add author"
-            required
             value={author}
             onChange={(e) => setauthor(e.target.value)}
           />
@@ -131,7 +140,7 @@ function App() {
         <div className="form-control">
           <label>Publication Year</label>
           <input
-            type="text"
+            type="number"
             value={pubYear}
             onChange={(e) => setpubYear(e.target.value)}
           />
@@ -143,8 +152,6 @@ function App() {
             type="number"
             id="quantity"
             name="quantity"
-            min="0"
-            max="10"
             value={rating}
             onChange={(e) => setRating(e.target.value)}
           />
