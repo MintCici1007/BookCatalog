@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { mapValues, groupBy, omit } from "lodash";
 import { collection, getDocs } from "firebase/firestore";
 import { db } from "./firebase-config";
 
@@ -11,8 +12,47 @@ function App() {
   const [books, setBooks] = useState([]);
 
   const getBooks = async () => {
-    const data = await getDocs(booksCollectionRef);
-    setBooks(data.docs.map((doc) => ({ ...doc.data() })));
+    // const data = await getDocs(booksCollectionRef);
+    // setBooks(data.docs.map((doc) => ({ ...doc.data() })));
+
+    // const q = query(
+    //   booksCollectionRef,
+    //   orderBy("year", "desc"),
+    //   orderBy("name", "asc")
+    // );
+
+    // const querySnapshot = await getDocs(q);
+    // querySnapshot.forEach((doc) => {
+    //   // doc.data() is never undefined for query doc snapshots
+    //   console.log(doc.id, " => ", doc.data());
+    // });
+
+    const orderData = [];
+    const orderResponse = await getDocs(booksCollectionRef);
+    const orders = orderResponse.docs;
+    orders.forEach((order) => orderData.push(order.data()));
+    let grouped = mapValues(groupBy(orderData, "pubYear"), (clist) =>
+      clist.map((book) => omit(book, "pubYear"))
+    );
+    // console.log(grouped);
+
+    const keys = Object.keys(grouped);
+
+    keys.forEach((key) => {
+      grouped[key].sort((firstItem, secondItem) => {
+        return firstItem.name < secondItem.name
+          ? -1
+          : firstItem.name > secondItem.name
+          ? 1
+          : 0;
+      });
+    });
+
+    const entries = Object.entries(grouped);
+    entries.sort((firstArray, secondArray) => {
+      return secondArray[0] - firstArray[0];
+    });
+    console.log(entries);
   };
 
   // const addBookEvent = (book) => {
