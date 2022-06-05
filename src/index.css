@@ -54,6 +54,10 @@ body {
   width: 100%;
 }
 
+.year {
+  
+}
+
 .book {
   background: #f4f4f4;
   margin: 5px;
@@ -61,14 +65,11 @@ body {
   cursor: pointer;
 }
 
-.book.reminder {
-  border-left: 5px solid green;
-}
-
 .book h3 {
   display: flex;
   align-items: center;
   justify-content: space-between;
+  text: bold;
 }
 
 .add-form {

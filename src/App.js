@@ -1,50 +1,42 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { mapValues, groupBy, omit } from "lodash";
-import { collection, getDocs } from "firebase/firestore";
+import {
+  collection,
+  getDocs,
+  deleteDoc,
+  addDoc,
+  doc,
+} from "firebase/firestore";
 import { db } from "./firebase-config";
 
 import Header from "./components/Header";
-import Books from "./components/Books";
-import AddBook from "./components/AddBook";
+import Years from "./components/Years";
 
 function App() {
   const booksCollectionRef = collection(db, "books");
-  const [books, setBooks] = useState([]);
+  const [years, setYears] = useState([]);
+
+  // first time going to website
+  useEffect(() => getBooks, []);
 
   const getBooks = async () => {
-    // const data = await getDocs(booksCollectionRef);
-    // setBooks(data.docs.map((doc) => ({ ...doc.data() })));
-
-    // const q = query(
-    //   booksCollectionRef,
-    //   orderBy("year", "desc"),
-    //   orderBy("name", "asc")
-    // );
-
-    // const querySnapshot = await getDocs(q);
-    // querySnapshot.forEach((doc) => {
-    //   // doc.data() is never undefined for query doc snapshots
-    //   console.log(doc.id, " => ", doc.data());
-    // });
-
-    const orderData = [];
+    let orderData = [];
     const orderResponse = await getDocs(booksCollectionRef);
     const orders = orderResponse.docs;
-    orders.forEach((order) => orderData.push(order.data()));
+    orderData = orders.map((doc) => ({ id: doc.id, ...doc.data() }));
 
     // Modify based on requirement 3
     let grouped = mapValues(groupBy(orderData, "pubYear"), (clist) =>
-      clist.map((book) => omit(book, "pubYear"))
+      clist.map((year) => omit(year, "pubYear"))
     );
-    // console.log(grouped);
 
     const keys = Object.keys(grouped);
 
     keys.forEach((key) => {
       grouped[key].sort((firstItem, secondItem) => {
-        return firstItem.name < secondItem.name
+        return firstItem.name.toLowerCase() < secondItem.name.toLowerCase()
           ? -1
-          : firstItem.name > secondItem.name
+          : firstItem.name.toLowerCase() > secondItem.name.toLowerCase()
           ? 1
           : 0;
       });
@@ -55,32 +47,130 @@ function App() {
       return secondArray[0] - firstArray[0];
     });
 
-    console.log(entries);
+    const arrOfObj = entries.map(([key, value]) => {
+      return { [key]: value };
+    });
 
-    setBooks(entries);
+    setYears(arrOfObj);
   };
 
-  // const addBookEvent = (book) => {
-  //   const newBook = {
-  //     id: book.name,
-  //     ...book,
-  //   };
-  //   setBooks([...books, newBook]);
-  // };
+  // add book
+  const [name, setName] = useState("");
+  const [author, setauthor] = useState("");
+  const [pubYear, setpubYear] = useState("");
+  const [rating, setRating] = useState(0);
+  const [isbn, setIsbn] = useState("");
+  // Add book to Firebase
+  const addBookFirestore = async () => {
+    let convertedPubYear;
+
+    if (pubYear || pubYear === "0") {
+      convertedPubYear = +pubYear;
+      if (convertedPubYear < 1800) {
+        alert("Publication year should be > 1800");
+        return;
+      }
+    }
+
+    await addDoc(booksCollectionRef, {
+      name: name,
+      author: author,
+      pubYear: +pubYear,
+      rating: +rating,
+      isbn: isbn,
+    });
+
+    await getBooks();
+  };
+
+  // onSubmit
+  const onSubmit = (e) => {
+    e.preventDefault();
+
+    setName("");
+    setauthor("");
+    setpubYear("");
+    setRating(0);
+    setIsbn("");
+  };
 
   // Delete book
-  const deleteBookEvent = (id) => {
-    setBooks(books.filter((book) => book.id !== id));
+  const deleteBookEvent = async (id) => {
+    const bookDoc = doc(db, "books", id);
+    await deleteDoc(bookDoc);
+    await getBooks();
   };
 
   return (
     <div className="container">
       <Header title="Book Catalog" />
-      <AddBook onAdd={getBooks} />
-      {books.length > 0 ? (
-        <Books books={books} onDelete={deleteBookEvent} />
+      <form className="add-form" onSubmit={onSubmit}>
+        <div className="form-control">
+          <label>Name</label>
+          <input
+            type="text"
+            placeholder="Add Name"
+            required
+            maxLength="100"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+          />
+        </div>
+
+        <div className="form-control">
+          <label>Author</label>
+          <input
+            type="text"
+            placeholder="Add author"
+            required
+            value={author}
+            onChange={(e) => setauthor(e.target.value)}
+          />
+        </div>
+
+        <div className="form-control">
+          <label>Publication Year</label>
+          <input
+            type="text"
+            value={pubYear}
+            onChange={(e) => setpubYear(e.target.value)}
+          />
+        </div>
+
+        <div className="form-control">
+          <label>Rating</label>
+          <input
+            type="number"
+            id="quantity"
+            name="quantity"
+            min="0"
+            max="10"
+            value={rating}
+            onChange={(e) => setRating(e.target.value)}
+          />
+        </div>
+
+        <div className="form-control">
+          <label>ISBN</label>
+          <input
+            type="text"
+            placeholder="Add ISBN"
+            value={isbn}
+            onChange={(e) => setIsbn(e.target.value)}
+          />
+        </div>
+
+        <input
+          type="submit"
+          value="submitAddBook"
+          className="btn btn-block"
+          onClick={addBookFirestore}
+        />
+      </form>
+      {years.length > 0 ? (
+        <Years years={years} onDelete={deleteBookEvent} />
       ) : (
-        "no Book to show"
+        "No Books to show"
       )}
     </div>
   );
