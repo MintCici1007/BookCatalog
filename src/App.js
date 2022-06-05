@@ -31,6 +31,8 @@ function App() {
     const orderResponse = await getDocs(booksCollectionRef);
     const orders = orderResponse.docs;
     orders.forEach((order) => orderData.push(order.data()));
+
+    // Modify based on requirement 3
     let grouped = mapValues(groupBy(orderData, "pubYear"), (clist) =>
       clist.map((book) => omit(book, "pubYear"))
     );
@@ -52,7 +54,10 @@ function App() {
     entries.sort((firstArray, secondArray) => {
       return secondArray[0] - firstArray[0];
     });
+
     console.log(entries);
+
+    setBooks(entries);
   };
 
   // const addBookEvent = (book) => {
