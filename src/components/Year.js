@@ -1,6 +1,6 @@
 import Book from "./Book";
 
-const Year = ({ year, onDelete }) => {
+const Year = ({ year, onDelete, onEdit }) => {
   const yearUi = Object.keys(year);
   const books = year[yearUi];
 
@@ -13,7 +13,7 @@ const Year = ({ year, onDelete }) => {
       )}
 
       {books.map((book) => (
-        <Book key={book.id} book={book} onDelete={onDelete} />
+        <Book key={book.id} book={book} onDelete={onDelete} onEdit={onEdit} />
       ))}
     </div>
   );

@@ -1,6 +1,6 @@
 import { FaTimes } from "react-icons/fa";
 
-const Book = ({ book, onDelete }) => {
+const Book = ({ book, onDelete, onEdit }) => {
   return (
     <div className="book">
       <h3>
@@ -11,12 +11,14 @@ const Book = ({ book, onDelete }) => {
           onClick={() => onDelete(book.id)}
         />{" "}
       </h3>
-      <p>Author: {book.author}</p>
+      {book.author ? <p>Author: {book.author}</p> : ""}
 
-      <p> Rating: {book.rating} </p>
+      {book.rating ? <p> Rating: {book.rating} </p> : ""}
+
       <p> ISBN: {book.isbn}</p>
 
       {/* {book.isbn ? <p> ISBN: {book.isbn} </p> : ""} */}
+      <div className="btn" onClick= {() => onEdit(book.id) } >Edit</div>
     </div>
   );
 };
