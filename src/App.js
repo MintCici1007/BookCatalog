@@ -12,22 +12,48 @@ import { db } from "./firebase-config";
 import Header from "./components/Header";
 import Years from "./components/Years";
 
+import RecommendedBook from "./components/RecommendedBook";
+
 function App() {
   const booksCollectionRef = collection(db, "books");
   const [years, setYears] = useState([]);
-
+  const [recommendedBook, setRecommendedBook] = useState({});
   // first time going to website
   useEffect(() => {
-    console.log("useEffect called");
     getBooks();
   }, []);
 
   const getBooks = async () => {
-    console.log("getBooks called");
     let orderData = [];
     const orderResponse = await getDocs(booksCollectionRef);
     const orders = orderResponse.docs;
     orderData = orders.map((doc) => ({ id: doc.id, ...doc.data() }));
+
+    // Handle recommended book
+    let books = [...orderData];
+
+    const date = new Date();
+    const currentYear = date.getFullYear();
+    const booksMin3Years = books.filter(
+      (book) => currentYear - book.pubYear <= 3
+    );
+
+    const bestRating = booksMin3Years.reduce((prevBook, currentBook) => {
+      return prevBook.rating > currentBook.rating
+        ? prevBook.rating
+        : currentBook.rating;
+    });
+
+    const filteredBook = booksMin3Years.filter(
+      (book) => book.rating === bestRating
+    );
+
+    if (filteredBook.length > 1) {
+      const randomPosition = Math.floor(Math.random() * filteredBook.length);
+      setRecommendedBook(filteredBook[randomPosition]);
+    } else {
+      setRecommendedBook(filteredBook[0]);
+    }
 
     // Modify based on requirement 3
     let grouped = mapValues(groupBy(orderData, "pubYear"), (clist) =>
@@ -79,7 +105,7 @@ function App() {
       return;
     }
 
-    if (+rating > 10 || +rating <0) {
+    if (+rating > 10 || +rating < 0) {
       alert("Book rating should be between 0 and 10.");
       return;
     }
@@ -113,6 +139,7 @@ function App() {
     await getBooks();
   };
 
+  console.log(recommendedBook);
   return (
     <div className="container">
       <Header title="Book Catalog" />
@@ -174,6 +201,12 @@ function App() {
           onClick={addBookFirestore}
         />
       </form>
+      <h1>Recommended Book</h1>
+      {recommendedBook ? (
+        <RecommendedBook recommendedBook={recommendedBook} />
+      ) : (
+        <p>No book to recommend</p>
+      )}
       {years.length > 0 ? (
         <Years years={years} onDelete={deleteBookEvent} />
       ) : (
